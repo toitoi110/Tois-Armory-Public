@@ -5,14 +5,14 @@
 
 [👉 **日本語の説明はこちら (Read in Japanese)**](README_ja.md)
 
-Toi's Armory is a highly advanced, lightweight Gun Datapack for Minecraft.
+Toi's Armory is a versatile and lightweight Gun Datapack for Minecraft.
 It provides realistic gunplay mechanics such as recoil patterns, ADS, bullet physics with damage falloff, and a highly customizable attachment system using only Datapacks and Resourcepacks, all while maintaining excellent performance.
 
 **Note: This datapack currently only works on Minecraft 26.2.**
 
 ## ✨ Features
 
-- **Advanced Gunplay Mechanics**
+- **Rich Gunplay Mechanics**
   - **Projectile Physics**: Bullets have velocity and gravity, and damage transitions dynamically based on distance.
   - **Recoil & Sway**: Each gun has a unique recoil pattern. Crosshair sway and accuracy reduction upon firing are dynamically calculated.
   - **Dynamic Reloading**: Reload times and animations change depending on whether there is a bullet left in the chamber or the gun is completely empty.
