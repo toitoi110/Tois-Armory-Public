@@ -21,7 +21,7 @@ It provides realistic gunplay mechanics such as recoil patterns, ADS, bullet phy
   - Customize your weapons with various sights, barrels, and grips. Attachments actively affect weapon stats such as ADS speed, recoil control, and weapon sway.
 - **Data-Driven Gunpack System**
   - You can easily create and add your own custom guns!
-  - By appending SNBT data to the `toisarm:import` storage during load, you can configure everything from animation frames, sound timings, recoil patterns, damage transitions, to attachment modifiers. (See the `default_gunpack` folder for examples).
+  - By appending NBT data to the `toisarm:import` storage during load, you can configure everything from animation frames, sound timings, recoil patterns, damage transitions, to attachment modifiers. (See the `default_gunpack` folder for examples).
 
 ## 🔫 Included Weapons
 *(More weapons will be added in future updates!)*
