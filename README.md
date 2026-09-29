@@ -34,19 +34,19 @@ It provides realistic gunplay mechanics such as recoil patterns, ADS, bullet phy
 
 ## 🎮 Controls
 
-The default controls are as follows (Keybinds can be changed via the Dialog Menu):
+The default controls are as follows. You can swap the actions assigned to "Swap Offhand" and "Drop Item" via the Dialog Menu.
 
 - **Right Click**: Fire
 - **Left Click**: Aim Down Sights (ADS)
-- **Swap Offhand (Default: F)**: Reload
-- **Drop Item (Default: Q)**: Change Fire Mode (Auto/Semi, etc.)
+- **Swap Offhand**: Reload (Default) or Change Fire Mode
+- **Drop Item**: Change Fire Mode (Default) or Reload
 - **Dialog Menu (Default: G)**: Opens the settings dialog menu.
-  - You can rebind your keys.
+  - You can swap key assignments.
   - Customize your gun's attachments.
   - (OP Only) Access the admin menu to get weapons and attachments.
 
 ## 📦 Installation
 1. Download both the **Datapack** and the **Resourcepack**.
 2. Place the Datapack in your world's `datapacks` folder.
-3. Place the Resourcepack in your `.minecraft/resourcepacks` folder and enable it in-game.
-4. Join the world, or if you are already in the world, execute the `/reload` command.
+3. Place the Resourcepack in your `resourcepacks` folder and enable it in-game.
+4. Because the datapack includes custom enchantments, you must rejoin the world or restart the server after installation (the `/reload` command is not sufficient).
