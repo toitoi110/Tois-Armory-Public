@@ -29,7 +29,8 @@ Toi's Armory は、データ駆動システムで設計された多機能かつ�
 - **アサルトライフル**: M4A1, AKM, AK-74, AS VAL, SCAR-H
 - **SMG**: MP5, Scorpion EVO3, UZI
 - **スナイパー＆マークスマン**: M700, SVD
-- **ショットガン＆ハンドガン**: Mossberg 590, USP45
+- **ショットガン**: Mossberg 590
+- **ハンドガン**: USP45
 
 ## 🎮 操作方法
 
