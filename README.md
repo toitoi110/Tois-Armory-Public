@@ -8,7 +8,7 @@
 Toi's Armory is a versatile and lightweight Gun Datapack for Minecraft.
 It provides realistic gunplay mechanics such as recoil patterns, ADS, bullet physics with damage falloff, and a highly customizable attachment system using only Datapacks and Resourcepacks, all while maintaining excellent performance.
 
-**Note: This datapack currently only works on Minecraft 26.2.**
+**Note: This datapack currently only works on Minecraft 26.3.**
 
 ## ✨ Features
 
