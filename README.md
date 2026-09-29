@@ -29,7 +29,8 @@ It provides realistic gunplay mechanics such as recoil patterns, ADS, bullet phy
 - **Assault Rifles**: M4A1, AKM, AK-74, AS VAL, SCAR-H
 - **SMGs**: MP5, Scorpion EVO3, UZI
 - **Sniper / Marksman**: M700, SVD
-- **Shotguns & Handguns**: Mossberg 590, USP45
+- **Shotguns**: Mossberg 590
+- **Handguns**: USP45
 
 ## 🎮 Controls
 
