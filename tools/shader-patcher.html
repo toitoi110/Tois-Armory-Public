@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toi's Armory Shader Patcher</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        #drop-zone {
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+            border: 2px dashed #4CAF50;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #drop-zone.hover {
+            background-color: #2e3d2e;
+        }
+        #log {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 500px;
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            min-height: 100px;
+            color: #a0a0a0;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #ff5252; }
+    </style>
+</head>
+<body>
+
+    <h1 id="title-el">Toi's Armory Shader Patcher</h1>
+    <p id="desc-el"></p>
+
+    <div id="drop-zone">
+        <span id="drop-zone-text"></span>
+    </div>
+    <input type="file" id="file-input" accept=".zip" style="display: none;">
+
+    <div id="log"></div>
+
+    <script>
+        // i18n Dictionary
+        const i18n = {
+            ja: {
+                desc: "Complementary等のシェーダー(.zip)を選択して、Toi's Armory対応版を生成します。",
+                dropZone: "ここにシェーダーの .zip ファイルをドラッグ＆ドロップ<br>または クリックしてファイルを選択",
+                waiting: "待機中...",
+                errNotZip: "エラー: .zipファイルを選択してください。",
+                loading: "ファイルを読み込み中: ",
+                errNotFound: " が見つかりません。Iris対応のシェーダーではない可能性があります。",
+                errAlreadyPatched: "エラー: このシェーダーはすでにToi's Armoryパッチが適用済みです！",
+                errNoHook: "エラー: 変数追加用のフックポイント(glColor)が見つかりません。構造が大きく異なります。",
+                errNoTex: "エラー: テクスチャサンプリングの標準構造(vec4 color = texture2D...)が見つかりません。",
+                successCheck: "前提条件のクリアを確認。パッチを適用します...",
+                successPatch: "パッチの適用に成功しました！ZIPを再構築しています...",
+                done: "完了しました！",
+                downloaded: " をダウンロードしました。",
+                errGeneral: "エラーが発生しました: "
+            },
+            en: {
+                desc: "Select a shader pack (.zip) like Complementary to generate a Toi's Armory compatible version.",
+                dropZone: "Drag & Drop a shader .zip file here<br>or Click to browse files",
+                waiting: "Waiting...",
+                errNotZip: "Error: Please select a .zip file.",
+                loading: "Loading file: ",
+                errNotFound: " not found. This might not be an Iris-compatible shader.",
+                errAlreadyPatched: "Error: This shader is already patched for Toi's Armory!",
+                errNoHook: "Error: Hook points (glColor) for variables not found. Structural mismatch.",
+                errNoTex: "Error: Standard texture sampling structure not found.",
+                successCheck: "Prerequisites cleared. Applying patch...",
+                successPatch: "Patch successfully applied! Rebuilding ZIP...",
+                done: "Done! ",
+                downloaded: " has been downloaded.",
+                errGeneral: "An error occurred: "
+            }
+        };
+
+        const userLang = (navigator.language || navigator.userLanguage).startsWith('ja') ? 'ja' : 'en';
+        const t = i18n[userLang];
+
+        // Apply UI Texts
+        document.getElementById('desc-el').textContent = t.desc;
+        document.getElementById('drop-zone-text').innerHTML = t.dropZone;
+        document.getElementById('log').textContent = t.waiting;
+
+        const dropZone = document.getElementById('drop-zone');
+        const logEl = document.getElementById('log');
+        const fileInput = document.getElementById('file-input');
+
+        function log(msg, type = 'info') {
+            const span = document.createElement('span');
+            span.textContent = msg + '\\n';
+            if (type === 'success') span.className = 'success';
+            if (type === 'error') span.className = 'error';
+            logEl.appendChild(span);
+        }
+
+        // File Selection Handlers
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+                fileInput.value = ''; // Reset input
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('hover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('hover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            logEl.innerHTML = ''; // clear log
+            
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                log(t.errNotZip, 'error');
+                return;
+            }
+
+            log(t.loading + file.name + "...");
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                
+                // 1. gbuffers_hand.glsl の存在確認
+                const handShaderPath = "shaders/program/gbuffers_hand.glsl";
+                const handShaderFile = zip.file(handShaderPath);
+                
+                if (!handShaderFile) {
+                    log(handShaderPath + t.errNotFound, 'error');
+                    return;
+                }
+
+                let content = await handShaderFile.async("string");
+
+                // 2. パッチ済み確認
+                if (content.includes("TOIS_ARMORY_PATCH_APPLIED")) {
+                    log(t.errAlreadyPatched, 'error');
+                    return;
+                }
+
+                // 3. 構造的依存関係（前提条件）のチェック (Duck Typing)
+                const hasVertexHook = content.includes("out vec4 glColor;");
+                const hasFragmentHook = content.includes("in vec4 glColor;");
+                const hasTextureHook = /void main\(\)\\s*\\{\\s*vec4 color = texture2D\\(tex,\\s*texCoord\\);/m.test(content);
+                const hasVertexEndHook = /#if HAND_SWAYING > 0[\\s\\S]*?#endif\\s*\\}/m.test(content);
+
+                if (!hasVertexHook || !hasFragmentHook) {
+                    log(t.errNoHook, 'error');
+                    return;
+                }
+                if (!hasTextureHook) {
+                    log(t.errNoTex, 'error');
+                    return;
+                }
+
+                log(t.successCheck, 'success');
+
+                // 4. パッチ処理 (Fragment 変数追加)
+                content = content.replace(
+                    /(in vec4 glColor;)/,
+                    "$1\\nflat in int vIsLeftArm;\\nin vec3 vLocalPos;"
+                );
+
+                // 5. パッチ処理 (Vertex 変数追加)
+                content = content.replace(
+                    /(out vec4 glColor;)/,
+                    "$1\\nflat out int vIsLeftArm;\\nout vec3 vLocalPos;"
+                );
+
+                // 6. 頂点シェーダーの計算追加
+                content = content.replace(
+                    /(#if HAND_SWAYING > 0[\\s\\S]*?#endif\\s*)\\}/m,
+                    \`$1
+    // --- TOIS_ARMORY_PATCH_APPLIED ---
+    vLocalPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
+    vIsLeftArm = 0;
+    float scaleX = length(gl_ModelViewMatrix[0].xyz);
+    float scaleZ = length(gl_ModelViewMatrix[2].xyz);
+    float ratio = 1.0;
+    if (scaleZ > 0.0001) {
+        ratio = scaleX / scaleZ;
+        if (ratio < 0.71 || (ratio > 0.80 && ratio < 0.946)) {
+            vIsLeftArm = 1;
+        }
+    }
+}\`
+                );
+
+                // 7. フラグメントシェーダーの関数とロジック追加
+                const patchFunctions = \`
+// --- TOIS_ARMORY_PATCH_APPLIED ---
+bool isSlim() {
+    vec4 samp1 = texture2D(tex, vec2(54.5 / 64.0, 20.5 / 64.0));
+    vec4 samp2 = texture2D(tex, vec2(55.5 / 64.0, 20.5 / 64.0));
+    return samp1.a < 0.1 || (((samp1.r + samp1.g + samp1.b) < 0.1) && ((samp2.r + samp2.g + samp2.b) < 0.1) && samp1.a > 0.9 && samp2.a > 0.9);
+}
+
+vec2 getArmUV(vec2 headUV, bool slim, bool isLeftSideGlobal) {
+    float u = headUV.x * 64.0; float v = headUV.y * 64.0;
+    bool isHat = u >= 32.0; float local_u = mod(u, 8.0); float local_v = mod(v, 8.0);
+    vec2 armUV = vec2(0.0); int face = -1; float base_u = isHat ? u - 32.0 : u;
+    if (v >= 8.0 && v <= 16.0) {
+        if (base_u >= 8.0 && base_u <= 16.0) face = 0;
+        else if (base_u >= 24.0 && base_u <= 32.0) face = 1;
+        else if (base_u >= 0.0 && base_u <= 8.0) face = 2;
+        else if (base_u >= 16.0 && base_u <= 24.0) face = 3;
+    } else if (v >= 0.0 && v <= 8.0) {
+        if (base_u >= 8.0 && base_u <= 16.0) face = 4;
+        else if (base_u >= 16.0 && base_u <= 24.0) face = 5;
+    }
+    float startX = 0.0, endX = 0.0, startY = 0.0, endY = 0.0;
+    bool swapUV = false; bool isLeftArm = isLeftSideGlobal; 
+    if (!isLeftArm) {
+        if (face == 0) { startX = slim ? 47.0 : 48.0; endX = slim ? 50.0 : 52.0; startY = 20.0; endY = 16.0; swapUV = false; }
+        else if (face == 1) { startX = slim ? 47.0 : 48.0; endX = 44.0; startY = 20.0; endY = 16.0; swapUV = false; }
+        else if (face == 2) { startX = 44.0; endX = 40.0; startY = 20.0; endY = 32.0; swapUV = true; }
+        else if (face == 3) { startX = slim ? 47.0 : 48.0; endX = slim ? 51.0 : 52.0; startY = 32.0; endY = 20.0; swapUV = true; }
+        else if (face == 4) { startX = 44.0; endX = slim ? 47.0 : 48.0; startY = 20.0; endY = 32.0; swapUV = false; }
+        else if (face == 5) { startX = slim ? 54.0 : 56.0; endX = slim ? 51.0 : 52.0; startY = 20.0; endY = 32.0; swapUV = false; }
+    } else {
+        if (face == 0) { startX = slim ? 39.0 : 40.0; endX = slim ? 42.0 : 44.0; startY = 52.0; endY = 48.0; swapUV = false; }
+        else if (face == 1) { startX = slim ? 39.0 : 40.0; endX = 36.0; startY = 52.0; endY = 48.0; swapUV = false; }
+        else if (face == 2) { startX = 36.0; endX = 32.0; startY = 52.0; endY = 64.0; swapUV = true; }
+        else if (face == 3) { startX = slim ? 39.0 : 40.0; endX = slim ? 43.0 : 44.0; startY = 64.0; endY = 52.0; swapUV = true; }
+        else if (face == 4) { startX = 36.0; endX = slim ? 39.0 : 40.0; startY = 52.0; endY = 64.0; swapUV = false; }
+        else if (face == 5) { startX = slim ? 46.0 : 48.0; endX = slim ? 43.0 : 44.0; startY = 52.0; endY = 64.0; swapUV = false; }
+    }
+    if (face == -1) return headUV;
+    if (swapUV) { armUV.x = mix(startX, endX, local_v / 8.0); armUV.y = mix(startY, endY, local_u / 8.0); }
+    else { armUV.x = mix(startX, endX, local_u / 8.0); armUV.y = mix(startY, endY, local_v / 8.0); }
+    if (isHat) { if (isLeftArm) armUV.x += 16.0; else armUV.y += 16.0; }
+    return armUV / 64.0;
+}
+
+void main() {
+    vec2 tCoord = texCoord;
+    bool isHand = false;
+    bool isLeftSideGlobal = false;
+    bool isArmUVRange = (tCoord.y < 0.26) || (tCoord.x >= 0.5 && tCoord.y >= 0.15);
+    vec3 dPosdx = dFdx(vLocalPos);
+    vec3 dPosdy = dFdy(vLocalPos);
+    vec2 dUVdx = dFdx(tCoord);
+    vec2 dUVdy = dFdy(tCoord);
+    float det = dUVdx.x * dUVdy.y - dUVdx.y * dUVdy.x;
+    if (abs(det) > 1e-9) {
+        vec3 dPosdu = ( dUVdy.y * dPosdx - dUVdx.y * dPosdy) / det;
+        vec3 dPosdv = (-dUVdy.x * dPosdx + dUVdx.x * dPosdy) / det;
+        float width = length(dPosdu) * 0.125;
+        float height = length(dPosdv) * 0.125;
+        float minDim = min(width, height);
+        float maxDim = max(width, height);
+        if (minDim > 0.0001) {
+            float aspect = maxDim / minDim;
+            if (isArmUVRange) {
+                float tol = 0.02; float strictTol = 0.015;
+                bool isRightSide = abs(aspect - 2.88) < tol || abs(aspect - 2.94) < tol || abs(aspect - 3.294) < tol || abs(aspect - 1.121) < strictTol || abs(aspect - 1.02) < strictTol;
+                bool isLeftSide = abs(aspect - 3.06) < tol || abs(aspect - 2.97) < tol || abs(aspect - 3.500) < tol || abs(aspect - 1.176) < strictTol || abs(aspect - 1.03) < strictTol;
+                if (isLeftSide) isLeftSideGlobal = true;
+                bool isArmSquare = abs(aspect - 1.000) < tol && maxDim < 0.35;
+                bool isSlimFront = abs(aspect - 4.0) < tol || abs(aspect - 3.8) < tol || abs(aspect - 4.2) < tol;
+                bool isSlimTop = abs(aspect - 1.333) < tol;
+                if (isRightSide || isLeftSide || isArmSquare || isSlimFront || isSlimTop) {
+                    isHand = true;
+                }
+            }
+        }
+    }
+    if (isHand) {
+        tCoord = getArmUV(tCoord, isSlim(), isLeftSideGlobal);
+    }
+    vec4 color = texture2D(tex, tCoord);\`;
+
+                content = content.replace(
+                    /void main\(\)\\s*\\{\\s*vec4 color = texture2D\\(tex,\\s*texCoord\\);/m,
+                    patchFunctions
+                );
+
+                // 保存処理
+                zip.file(handShaderPath, content);
+                log(t.successPatch, 'success');
+
+                const newZipBlob = await zip.generateAsync({ type: "blob" });
+                
+                // ダウンロードトリガー
+                const url = URL.createObjectURL(newZipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                // 元のファイル名に -tois-patch を付ける
+                const newName = file.name.replace('.zip', '') + '-tois-patch.zip';
+                a.download = newName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                log(t.done + "[" + newName + "]" + t.downloaded, 'success');
+
+            } catch (err) {
+                console.error(err);
+                log(t.errGeneral + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
