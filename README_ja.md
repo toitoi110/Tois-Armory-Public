@@ -51,10 +51,11 @@ Toi's Armory は、データ駆動システムで設計された多機能かつ�
 3. リソースパックを `resourcepacks` フォルダに入れ、ゲーム内で適用します。
 4. データパックにはカスタムエンチャントが含まれているため、導入後はワールドに入り直すか、サーバーを再起動してください（`/reload` コマンドでは正常に反映されません）。
 
-## 🎨 シェーダー環境 (Iris / OptiFine) でのご利用について
-Toi's Armoryはバニラシェーダーを利用して一人称の腕や銃を美しく描画していますが、IrisやOptiFineなどのシェーダーパック（Complementary Shaders等）を使用すると、描画パイプラインが置き換えられてしまい、腕の形が崩れる問題が発生します。
+## 🎨 シェーダー環境でのご利用について
 
-シェーダー環境でToi's Armoryを綺麗に動作させるための**Webパッチツール**をご用意しました。ブラウザ上でシェーダーのZIPファイルにToi's Armory対応コードを自動で組み込むことができます。
+このデータパックはバニラシェーダーを使用して一人称視点で腕にテクスチャを表示しています。MODなどを前提とするシェーダーパックを使用すると、描画パイプラインが置き換えられてしまい腕が正しく表示されません。
+そのため、シェーダー環境で正しくリソースパックを動作させるためのWebパッチツールを用意しています。以下のURLからシェーダーのZIPファイルに、Toi's Armoryに対応させるコードを自動で組み込むことができます。
 
 🔗 **[Toi's Armory Shader Patcher を開く](https://toitoi110.github.io/Tois-Armory-Public/tools/shader-patcher.html)**
-*(現在 Complementary Unbound / Reimagined に対応しています)*
+
+動作確認済み: [ComplementaryUnbound](https://modrinth.com/shader/complementary-unbound)

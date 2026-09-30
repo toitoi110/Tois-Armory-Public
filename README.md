@@ -51,10 +51,11 @@ The default controls are as follows. You can swap the actions assigned to "Swap 
 3. Place the Resourcepack in your `resourcepacks` folder and enable it in-game.
 4. Because the datapack includes custom enchantments, you must rejoin the world or restart the server after installation (the `/reload` command is not sufficient).
 
-## 🎨 Using with Shaders (Iris / OptiFine)
-Toi's Armory uses vanilla core shaders to beautifully render first-person arms and guns. However, if you use third-party shader packs like Complementary Shaders via Iris or OptiFine, the rendering pipeline gets completely replaced, which can cause the arm models to break.
+## 🎨 Using with Shader Packs
 
-To fix this and enjoy Toi's Armory with beautiful shaders, we have prepared a **Web Patcher Tool**. This tool runs entirely in your browser and automatically injects the necessary Toi's Armory compatibility code into your shader's ZIP file.
+This datapack uses vanilla core shaders to display arm textures in first-person view. If you use shader packs that require mods, the rendering pipeline is replaced, and the arms will not display correctly.
+For this reason, we provide a Web Patcher Tool to make the resource pack work correctly in shader environments. From the URL below, you can automatically inject compatibility code for Toi's Armory into your shader's ZIP file.
 
 🔗 **[Open Toi's Armory Shader Patcher](https://toitoi110.github.io/Tois-Armory-Public/tools/shader-patcher.html)**
-*(Currently supports Complementary Unbound & Reimagined)*
+
+Confirmed to work with: [ComplementaryUnbound](https://modrinth.com/shader/complementary-unbound)
