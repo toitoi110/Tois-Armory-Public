@@ -279,31 +279,38 @@ void main() {
     vec2 tCoord = texCoord;
     bool isHand = false;
     bool isLeftSideGlobal = false;
-    bool isArmUVRange = (tCoord.y < 0.26) || (tCoord.x >= 0.5 && tCoord.y >= 0.15);
-    vec3 dPosdx = dFdx(vLocalPos);
-    vec3 dPosdy = dFdy(vLocalPos);
-    vec2 dUVdx = dFdx(tCoord);
-    vec2 dUVdy = dFdy(tCoord);
-    float det = dUVdx.x * dUVdy.y - dUVdx.y * dUVdy.x;
-    if (abs(det) > 1e-9) {
-        vec3 dPosdu = ( dUVdy.y * dPosdx - dUVdx.y * dPosdy) / det;
-        vec3 dPosdv = (-dUVdy.x * dPosdx + dUVdx.x * dPosdy) / det;
-        float width = length(dPosdu) * 0.125;
-        float height = length(dPosdv) * 0.125;
-        float minDim = min(width, height);
-        float maxDim = max(width, height);
-        if (minDim > 0.0001) {
-            float aspect = maxDim / minDim;
-            if (isArmUVRange) {
-                float tol = 0.02; float strictTol = 0.015;
-                bool isRightSide = abs(aspect - 2.88) < tol || abs(aspect - 2.94) < tol || abs(aspect - 3.294) < tol || abs(aspect - 1.121) < strictTol || abs(aspect - 1.02) < strictTol;
-                bool isLeftSide = abs(aspect - 3.06) < tol || abs(aspect - 2.97) < tol || abs(aspect - 3.500) < tol || abs(aspect - 1.176) < strictTol || abs(aspect - 1.03) < strictTol;
-                if (isLeftSide) isLeftSideGlobal = true;
-                bool isArmSquare = abs(aspect - 1.000) < tol && maxDim < 0.35;
-                bool isSlimFront = abs(aspect - 4.0) < tol || abs(aspect - 3.8) < tol || abs(aspect - 4.2) < tol;
-                bool isSlimTop = abs(aspect - 1.333) < tol;
-                if (isRightSide || isLeftSide || isArmSquare || isSlimFront || isSlimTop) {
-                    isHand = true;
+    
+    // プレイヤースキン（正方形で比較的小さい）とブロックアトラス（巨大）を区別
+    ivec2 texSize = textureSize(tex, 0);
+    bool isSkinTexture = (texSize.x == texSize.y) && (texSize.x <= 256);
+
+    if (isSkinTexture) {
+        bool isArmUVRange = (tCoord.y < 0.26) || (tCoord.x >= 0.5 && tCoord.y >= 0.15);
+        vec3 dPosdx = dFdx(vLocalPos);
+        vec3 dPosdy = dFdy(vLocalPos);
+        vec2 dUVdx = dFdx(tCoord);
+        vec2 dUVdy = dFdy(tCoord);
+        float det = dUVdx.x * dUVdy.y - dUVdx.y * dUVdy.x;
+        if (abs(det) > 1e-9) {
+            vec3 dPosdu = ( dUVdy.y * dPosdx - dUVdx.y * dPosdy) / det;
+            vec3 dPosdv = (-dUVdy.x * dPosdx + dUVdx.x * dPosdy) / det;
+            float width = length(dPosdu) * 0.125;
+            float height = length(dPosdv) * 0.125;
+            float minDim = min(width, height);
+            float maxDim = max(width, height);
+            if (minDim > 0.0001) {
+                float aspect = maxDim / minDim;
+                if (isArmUVRange) {
+                    float tol = 0.02; float strictTol = 0.015;
+                    bool isRightSide = abs(aspect - 2.88) < tol || abs(aspect - 2.94) < tol || abs(aspect - 3.294) < tol || abs(aspect - 1.121) < strictTol || abs(aspect - 1.02) < strictTol;
+                    bool isLeftSide = abs(aspect - 3.06) < tol || abs(aspect - 2.97) < tol || abs(aspect - 3.500) < tol || abs(aspect - 1.176) < strictTol || abs(aspect - 1.03) < strictTol;
+                    if (isLeftSide) isLeftSideGlobal = true;
+                    bool isArmSquare = abs(aspect - 1.000) < tol && maxDim < 0.35;
+                    bool isSlimFront = abs(aspect - 4.0) < tol || abs(aspect - 3.8) < tol || abs(aspect - 4.2) < tol;
+                    bool isSlimTop = abs(aspect - 1.333) < tol;
+                    if (isRightSide || isLeftSide || isArmSquare || isSlimFront || isSlimTop) {
+                        isHand = true;
+                    }
                 }
             }
         }
